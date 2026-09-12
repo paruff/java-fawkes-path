@@ -1,0 +1,152 @@
+# Copyright (c) 2025  Philip Ruff
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+# IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+# DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+# OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+# OR OTHER DEALINGS IN THE SOFTWARE.
+
+# fawkes#2032: java-fawkes-path golden path CI. Mirrors python-fawkes-path's
+# build->scan->sign->push->GitOps chain, but as GitHub Actions (this repo's
+# CI mechanism, per the issue) rather than python-fawkes-path's in-cluster
+# Tekton pipeline - the issue explicitly asks for GitHub Actions here.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  IMAGE_NAME: ghcr.io/paruff/java-fawkes-path
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: Build and test (Maven)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Build and run tests
+        run: mvn -B clean verify
+
+  build-push-image:
+    name: Build and push image
+    needs: build-test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image-tag: ${{ steps.tag.outputs.short-sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: tag
+        run: echo "short-sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.short-sha }}
+          # Immutable per-commit tag only, not :latest - matches this repo's
+          # own past incident (docs/DEPLOYMENT_STRATEGY.md, #1751 Phase 3):
+          # a floating tag being trusted for scan/sign/promote silently
+          # decoupled those steps from the image actually built.
+
+  scan-sbom-sign:
+    name: Scan, SBOM, sign
+    needs: build-push-image
+    permissions:
+      contents: read
+      security-events: write
+      packages: write
+      id-token: write
+    uses: paruff/fawkes/.github/workflows/reusable-security-scanning.yml@main
+    with:
+      image-name: java-fawkes-path
+      image-tag: ${{ needs.build-push-image.outputs.image-tag }}
+
+  sbom:
+    name: SBOM
+    needs: build-push-image
+    permissions:
+      contents: read
+      packages: write
+    uses: paruff/fawkes/.github/workflows/reusable-sbom-generation.yml@main
+    with:
+      image-name: java-fawkes-path
+      image-tag: ${{ needs.build-push-image.outputs.image-tag }}
+
+  sign:
+    name: Sign
+    needs: build-push-image
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    uses: paruff/fawkes/.github/workflows/reusable-image-signing.yml@main
+    with:
+      image-name: java-fawkes-path
+      image-tag: ${{ needs.build-push-image.outputs.image-tag }}
+
+  gitops-promote:
+    name: Promote to GitOps repo
+    needs: [build-push-image, scan-sbom-sign, sbom, sign]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Update image tag in java-fawkes-path-gitops
+        env:
+          GH_TOKEN: ${{ secrets.GITOPS_PROMOTE_TOKEN }}
+          NEW_TAG: ${{ needs.build-push-image.outputs.image-tag }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::warning::GITOPS_PROMOTE_TOKEN not set - skipping promotion. Add a repo secret (contents+PR write on paruff/java-fawkes-path-gitops) to enable this step."
+            exit 0
+          fi
+          git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/paruff/java-fawkes-path-gitops.git" gitops
+          cd gitops
+          sed -i "s|image: ghcr.io/paruff/java-fawkes-path:.*|image: ghcr.io/paruff/java-fawkes-path:${NEW_TAG}|" deployment.yaml
+          if git diff --quiet; then
+            echo "image tag already at ${NEW_TAG} - nothing to promote"
+            exit 0
+          fi
+          git config user.email "github-actions@fawkes.local"
+          git config user.name "java-fawkes-path-ci"
+          git commit -am "chore: promote image to ${NEW_TAG}"
+          git push origin main
