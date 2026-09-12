@@ -108,7 +108,7 @@ jobs:
       packages: write
     uses: paruff/fawkes/.github/workflows/reusable-sbom-generation.yml@main
     with:
-      image-name: java-fawkes-path
+      image-name: paruff/java-fawkes-path
       image-tag: ${{ needs.build-push-image.outputs.image-tag }}
 
   sign:
@@ -120,7 +120,7 @@ jobs:
       id-token: write
     uses: paruff/fawkes/.github/workflows/reusable-image-signing.yml@main
     with:
-      image-name: java-fawkes-path
+      image-name: paruff/java-fawkes-path
       image-tag: ${{ needs.build-push-image.outputs.image-tag }}
 
   gitops-promote:
