@@ -108,7 +108,12 @@ jobs:
       packages: write
     uses: paruff/fawkes/.github/workflows/reusable-sbom-generation.yml@main
     with:
-      image-name: paruff/java-fawkes-path
+      # Bare name, not "paruff/java-fawkes-path" - this reusable workflow
+      # builds its output filename as "sbom-<image-name>-<tag>.json"; a "/"
+      # in image-name makes that a (nonexistent) subdirectory path and the
+      # write fails. Confirmed live. Only used for labeling here, not a
+      # registry pull, so the bare name is correct anyway.
+      image-name: java-fawkes-path
       image-tag: ${{ needs.build-push-image.outputs.image-tag }}
 
   sign:
@@ -122,6 +127,9 @@ jobs:
     with:
       image-name: paruff/java-fawkes-path
       image-tag: ${{ needs.build-push-image.outputs.image-tag }}
+    secrets:
+      registry-username: ${{ github.actor }}
+      registry-password: ${{ secrets.GITHUB_TOKEN }}
 
   gitops-promote:
     name: Promote to GitOps repo
