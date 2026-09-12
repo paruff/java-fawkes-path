@@ -20,18 +20,18 @@ RUN apk upgrade --no-cache && \
     apk add --no-cache netcat-openbsd && \
     rm -rf /var/cache/apk/*
 
-# Create non-root user
-RUN addgroup -g 65534 appuser && \
-    adduser -D -u 65534 -G appuser appuser
-
 # Copy JAR from build stage
 COPY --from=build /app/target/*.jar app.jar
 
-# Change ownership
-RUN chown -R appuser:appuser /app
-
-# Switch to non-root user
-USER appuser
+# Run as UID/GID 65534 (the "nobody" account already present in this base
+# image, matching the runAsUser/runAsGroup: 65534 convention this project's
+# Kubernetes securityContexts use elsewhere) - no addgroup/adduser needed,
+# and none possible: GID/UID 65534 is already taken by the image's
+# pre-existing nobody account, so creating a *new* user at that ID fails
+# (confirmed live: `addgroup -g 65534 appuser` errored with GID already
+# in use).
+RUN chown -R 65534:65534 /app
+USER 65534:65534
 
 # Expose port
 EXPOSE 8080
