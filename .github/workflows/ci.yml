@@ -97,8 +97,8 @@ jobs:
       id-token: write
     uses: paruff/fawkes/.github/workflows/reusable-security-scanning.yml@main
     with:
-      image-name: java-fawkes-path
-      image-tag: ${{ needs.build-push-image.outputs.image-tag }}
+      scan-type: container
+      image-ref: ghcr.io/paruff/java-fawkes-path:${{ needs.build-push-image.outputs.image-tag }}
 
   sbom:
     name: SBOM
