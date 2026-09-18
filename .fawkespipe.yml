@@ -1,0 +1,36 @@
+app:
+  name: java-fawkes-path
+  type: service
+  language: java
+  version: 0.1.0
+
+build:
+  builder: docker
+  docker:
+    dockerfile: Dockerfile
+    context: .
+  image:
+    registry: docker.io
+    namespace: paruff
+    name: java-fawkes-path
+    tags:
+      - "${GIT_COMMIT_SHORT}"
+
+stages:
+  test:
+    enabled: true
+    commands:
+      - language: java
+        cmd: mvn test
+
+  dependency_scan:
+    enabled: true
+
+  build:
+    enabled: true
+
+  image_scan:
+    enabled: true
+
+advanced:
+  timeout: 20
