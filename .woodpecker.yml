@@ -17,10 +17,10 @@ steps:
 - name: build
   image: docker:24-cli
   commands:
-  - docker build -f Dockerfile -t $CI_REPO_NAME .
+  - docker build -f Dockerfile -t paruff/java-fawkes-path .
 - name: image-scan
   image: aquasec/trivy:latest
   commands:
   - mkdir -p artifacts/security
   - trivy image --exit-code 1 --format json --output artifacts/security/trivy-image.json
-    $CI_REPO_NAME
+    paruff/java-fawkes-path
