@@ -1,0 +1,55 @@
+# .github/ISSUE_TEMPLATE/bug_report.yml
+name: 🐛 Bug Report
+description: Report a bug in java-fawkes-path (Maven service, pipeline contract, docs)
+title: "[Bug]: "
+# Only labels that already exist in this repo are listed. uFawkesDevX's
+# template also sets "needs-triage"; this repo has no such label.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please fill out the form below to help us investigate.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+      placeholder: e.g. `mvn test` fails on the Cucumber runner after the dependency bump
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Affected Component
+      options:
+        - Application code (src/main/java)
+        - Tests (src/test/java)
+        - Build (pom.xml / Maven)
+        - CI / pipeline contract (.fawkespipe.yml, .woodpecker.yml)
+        - Container (Dockerfile)
+        - Documentation (README, docs/)
+      validations:
+        required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior.
+      validations:
+        required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version / Tag / Commit SHA
+      placeholder: v0.1.1 or d80343b
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Logs / Output
+      render: shell
