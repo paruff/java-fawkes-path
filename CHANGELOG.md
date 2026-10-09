@@ -1,5 +1,40 @@
 # Changelog
 
+## [0.1.1](https://github.com/paruff/java-fawkes-path/compare/v0.1.0...v0.1.1) (2026-10-09)
+
+
+### Added
+
+* bootstrap java-fawkes-path from templates/java-service ([dd0790e](https://github.com/paruff/java-fawkes-path/commit/dd0790e126145e32bfe215476c0cd5231d92d099))
+* **ci:** onboard to the uFawkesPipe pipeline contract ([0cbdcd9](https://github.com/paruff/java-fawkes-path/commit/0cbdcd9f9596742d16724aee2290ed8830cfa6ef))
+
+
+### Fixed
+
+* **ci:** add missing registry credentials to sign job, revert SBOM name ([ab0d2b2](https://github.com/paruff/java-fawkes-path/commit/ab0d2b2283ab21b91b91ebdeb7dd30c48f78e74c))
+* **ci:** include owner prefix in image-name for sign/sbom jobs ([a24ae4f](https://github.com/paruff/java-fawkes-path/commit/a24ae4f29caf70b0105f95b62c4ab1e5bbd071e6))
+* **ci:** re-enable dependency-scan, use fixed generator output ([ac9c8c2](https://github.com/paruff/java-fawkes-path/commit/ac9c8c28f0a1a0e5fb9fe3d85c96a01a12142f19))
+* **ci:** rename hyphenated step output to avoid expression ambiguity ([dc8b7e6](https://github.com/paruff/java-fawkes-path/commit/dc8b7e6e8bb482c242af0fb5e6b265a675fdf2db))
+* **ci:** use image-ref (not image-name/image-tag) for reusable-security-scanning.yml ([f0ff88c](https://github.com/paruff/java-fawkes-path/commit/f0ff88cd4a7ab64443acf1fdc22920c4f68f729e))
+* **docker:** use existing nobody UID/GID instead of creating a duplicate ([fe2be1f](https://github.com/paruff/java-fawkes-path/commit/fe2be1ffe178dfa39ada042eb855d37cc5ed3069))
+
+
+### Docs
+
+* **governance:** add MIT LICENSE, CODE_OF_CONDUCT, SECURITY.md, FUNDING.yml ([f5095ef](https://github.com/paruff/java-fawkes-path/commit/f5095ef4c182f7d47cc4cbb872d2df456b2e8004))
+* **governance:** add MIT LICENSE, CODE_OF_CONDUCT, SECURITY.md, FUNDING.yml ([db25041](https://github.com/paruff/java-fawkes-path/commit/db25041bb72ef9a987048176fe02435137156dd4))
+
+
+### Chores
+
+* release automation and PR/issue templates (suite polish Phases 2–3) ([bcecf8d](https://github.com/paruff/java-fawkes-path/commit/bcecf8d34b192466c6aab4c4491e045dbf1cfd16))
+* **release:** standardize on release-please ([97e79ac](https://github.com/paruff/java-fawkes-path/commit/97e79ac343239c2f146df397c450c670cc290431))
+* retrigger build with persistent Maven cache ([d80343b](https://github.com/paruff/java-fawkes-path/commit/d80343be63eb641d529680042abf43a473c10981))
+* **templates:** add PR template and the standard issue template set ([4d9bce6](https://github.com/paruff/java-fawkes-path/commit/4d9bce62ee080c37d938fecba7950c705f97e537))
+* trigger first Woodpecker build ([c2128a9](https://github.com/paruff/java-fawkes-path/commit/c2128a9f697238714858f652d389e349f051cab3))
+
+## Changelog
+
 All notable changes to java-fawkes-path will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
